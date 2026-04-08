@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NoteWall — Your Ideas, Beautifully Organized</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
+<style>
+/* ─── Reset & Tokens ─────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+ 
+:root {
+  /* Light theme */
+  --bg:          #faf9f7;
+  --surface:     #ffffff;
+  --surface2:    #f3f2ef;
+  --border:      rgba(0,0,0,0.07);
+  --border-md:   rgba(0,0,0,0.12);
+  --text:        #1a1916;
+  --text2:       #5c5a54;
+  --text3:       #9e9b93;
+  --accent:      #2b5be0;
+  --accent-dim:  rgba(43,91,224,0.1);
+  --accent-glow: rgba(43,91,224,0.25);
+  --red:         #e03e3e;
+  --green:       #2d9e6b;
+  --pin-on:      #e05b30;
+ 
+  /* Note palette */
+  --n0: #fffbeb; --n0d: #f59e0b;
+  --n1: #f0fdf4; --n1d: #22c55e;
+  --n2: #eff6ff; --n2d: #3b82f6;
+  --n3: #fdf4ff; --n3d: #a855f7;
+  --n4: #fff1f2; --n4d: #f43f5e;
+  --n5: #fff7ed; --n5d: #f97316;
+  --n6: #f0fdfa; --n6d: #14b8a6;
+  --n7: #fefce8; --n7d: #eab308;
+ 
+  --radius-sm:   8px;
+  --radius-md:   14px;
+  --radius-lg:   20px;
+  --radius-xl:   28px;
+ 
+  --shadow-sm:   0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md:   0 4px 16px rgba(0,0,0,0.08), 0 2px 6px rgba(0,0,0,0.05);
+  --shadow-lg:   0 12px 40px rgba(0,0,0,0.12), 0 4px 16px rgba(0,0,0,0.06);
+  --shadow-hover:0 20px 60px rgba(0,0,0,0.14), 0 6px 20px rgba(0,0,0,0.08);
+ 
+  --font-display: 'Playfair Display', Georgia, serif;
+  --font-body:    'DM Sans', system-ui, sans-serif;
+ 
+  --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  --spring:     0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+ 
+[data-theme="dark"] {
+  --bg:          #111110;
+  --surface:     #1c1c1a;
+  --surface2:    #242422;
+  --border:      rgba(255,255,255,0.07);
+  --border-md:   rgba(255,255,255,0.14);
+  --text:        #f0ede8;
+  --text2:       #a8a49c;
+  --text3:       #6b6760;
+  --accent:      #5b82f0;
+  --accent-dim:  rgba(91,130,240,0.12);
+  --accent-glow: rgba(91,130,240,0.3);
+  --red:         #f06a6a;
+  --green:       #4ade80;
+  --pin-on:      #f0824a;
+ 
+  --n0: #2a2510; --n0d: #fbbf24;
+  --n1: #0f2018; --n1d: #4ade80;
+  --n2: #101c30; --n2d: #60a5fa;
+  --n3: #1e0f28; --n3d: #c084fc;
+  --n4: #28100f; --n4d: #fb7185;
+  --n5: #271608; --n5d: #fb923c;
+  --n6: #092420; --n6d: #2dd4bf;
+  --n7: #231e08; --n7d: #facc15;
+ 
+  --shadow-sm:   0 1px 3px rgba(0,0,0,0.3);
+  --shadow-md:   0 4px 16px rgba(0,0,0,0.4);
+  --shadow-lg:   0 12px 40px rgba(0,0,0,0.5);
+  --shadow-hover:0 20px 60px rgba(0,0,0,0.6);
+}
+ 
+/* ─── Base ───────────────────────────────────────────────── */
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--font-body);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  transition: background var(--transition), color var(--transition);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+ 
+/* Subtle dot-grid background */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: radial-gradient(circle, var(--border) 1px, transparent 1px);
+  background-size: 28px 28px;
+  pointer-events: none;
+  z-index: 0;
+  transition: opacity var(--transition);
+}
+ 
+/* ─── Layout ─────────────────────────────────────────────── */
+#app {
+  position: relative;
+  z-index: 1;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1.5rem 3rem;
+}
+ 
+/* ─── Header ─────────────────────────────────────────────── */
+header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(250,249,247,0.85);
+  backdrop-filter: blur(20px) saturate(1.4);
+  -webkit-backdrop-filter: blur(20px) saturate(1.4);
+  border-bottom: 1px solid var(--border);
+  transition: background var(--transition);
+  margin: 0 -1.5rem;
+  padding: 0 1.5rem;
+}
+[data-theme="dark"] header {
+  background: rgba(17,17,16,0.88);
+}
+.header-inner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 64px;
+  flex-wrap: wrap;
+}
+ 
+/* Logo */
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex: 0 0 auto;
+  text-decoration: none;
+}
+.logo-icon {
+  width: 34px; height: 34px;
+  background: var(--text);
+  border-radius: var(--radius-sm);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 17px;
+  transition: transform var(--spring);
+  flex-shrink: 0;
+}
+.logo:hover .logo-icon { transform: rotate(-8deg) scale(1.08); }
+.logo-text {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--text);
+  letter-spacing: -0.02em;
+}
+ 
+/* Search */
+.search-wrap {
+  flex: 1;
+  min-width: 180px;
+  max-width: 380px;
+  position: relative;
+}
+.search-wrap svg {
+  position: absolute;
+  left: 13px; top: 50%;
+  transform: translateY(-50%);
+  width: 15px; height: 15px;
+  color: var(--text3);
+  pointer-events: none;
+  transition: color var(--transition);
+}
+#search {
+  width: 100%;
+  padding: 9px 14px 9px 38px;
+  border: 1px solid var(--border-md);
+  border-radius: 40px;
+  background: var(--surface);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 300;
+  outline: none;
+  transition: border-color var(--transition), box-shadow var(--transition);
+  box-shadow: var(--shadow-sm);
+}
+#search:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+#search::placeholder { color: var(--text3); }
+.search-wrap:focus-within svg { color: var(--accent); }
+ 
+/* Header actions */
+.header-actions { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+ 
+.pill-counter {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text2);
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 40px;
+  padding: 5px 12px;
+  white-space: nowrap;
+  transition: all var(--transition);
+}
+.pill-counter.near-limit { color: #e07a30; border-color: rgba(224,122,48,0.3); background: rgba(224,122,48,0.08); }
+ 
+.icon-btn {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  border: 1px solid var(--border-md);
+  background: var(--surface);
+  color: var(--text2);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all var(--transition);
+  box-shadow: var(--shadow-sm);
+  flex-shrink: 0;
+}
+.icon-btn:hover { background: var(--surface2); color: var(--text); transform: scale(1.05); }
+.icon-btn svg { width: 16px; height: 16px; }
+ 
+.btn-add {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 18px;
+  height: 36px;
+  background: var(--text);
+  color: var(--bg);
+  border: none;
+  border-radius: 40px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--spring);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  white-space: nowrap;
+}
+.btn-add:hover { transform: translateY(-1px) scale(1.03); box-shadow: 0 6px 20px rgba(0,0,0,0.25); }
+.btn-add:active { transform: scale(0.97); }
+.btn-add svg { width: 14px; height: 14px; }
+ 
+/* ─── Main Content ───────────────────────────────────────── */
+main { padding-top: 2rem; }
+ 
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.section-label {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text3);
+}
+.section-line {
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+#pinned-section { margin-bottom: 2rem; display: none; }
+ 
+/* ─── Grid ───────────────────────────────────────────────── */
+.notes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 16px;
+  align-items: start;
+}
+ 
+/* ─── Note Card ──────────────────────────────────────────── */
+.note {
+  border-radius: var(--radius-lg);
+  padding: 18px 18px 14px;
+  min-height: 180px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  cursor: grab;
+  border: 1px solid transparent;
+  transition: transform var(--transition), box-shadow var(--transition), border-color var(--transition);
+  box-shadow: var(--shadow-md);
+  animation: noteIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  will-change: transform;
+  overflow: hidden;
+}
+.note::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(255,255,255,0.5);
+  pointer-events: none;
+}
+[data-theme="dark"] .note::after { border-color: rgba(255,255,255,0.06); }
+.note:hover {
+  transform: translateY(-4px) rotate(0.3deg);
+  box-shadow: var(--shadow-hover);
+  border-color: rgba(255,255,255,0.3);
+}
+.note:active { cursor: grabbing; }
+.note.dragging { opacity: 0.35; transform: scale(0.95) rotate(-1deg); box-shadow: var(--shadow-sm); }
+.note.drag-over { outline: 2px dashed var(--accent); outline-offset: 3px; }
+ 
+@keyframes noteIn {
+  from { opacity: 0; transform: scale(0.85) translateY(16px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+@keyframes noteOut {
+  to { opacity: 0; transform: scale(0.8) translateY(10px); }
+}
+ 
+/* Stagger animation for initial load */
+.note:nth-child(1) { animation-delay: 0.04s; }
+.note:nth-child(2) { animation-delay: 0.08s; }
+.note:nth-child(3) { animation-delay: 0.12s; }
+.note:nth-child(4) { animation-delay: 0.16s; }
+.note:nth-child(5) { animation-delay: 0.20s; }
+.note:nth-child(6) { animation-delay: 0.24s; }
+ 
+/* Color shine accent at top of card */
+.note-shine {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  opacity: 0.7;
+  transition: opacity var(--transition);
+}
+.note:hover .note-shine { opacity: 1; }
+ 
+/* Pin button */
+.pin-btn {
+  position: absolute;
+  top: 12px; right: 12px;
+  width: 28px; height: 28px;
+  background: rgba(0,0,0,0.06);
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0;
+  transition: opacity var(--transition), background var(--transition), transform var(--spring);
+  color: var(--text2);
+}
+.note:hover .pin-btn, .note.pinned .pin-btn { opacity: 1; }
+.note.pinned .pin-btn { background: rgba(224,91,48,0.15); color: var(--pin-on); }
+.pin-btn:hover { background: rgba(0,0,0,0.12); transform: scale(1.15) rotate(-15deg); }
+.pin-btn svg { width: 13px; height: 13px; }
+ 
+/* Inputs */
+.note-title {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 500;
+  border: none;
+  background: transparent;
+  width: calc(100% - 32px);
+  color: inherit;
+  outline: none;
+  margin-bottom: 8px;
+  line-height: 1.4;
+  letter-spacing: -0.01em;
+}
+.note-title::placeholder { font-family: var(--font-body); font-weight: 300; opacity: 0.4; font-size: 14px; }
+ 
+.note-content {
+  font-size: 13.5px;
+  font-weight: 300;
+  line-height: 1.7;
+  border: none;
+  background: transparent;
+  width: 100%;
+  flex: 1;
+  color: inherit;
+  outline: none;
+  font-family: var(--font-body);
+  resize: none;
+  min-height: 72px;
+}
+.note-content::placeholder { opacity: 0.38; }
+ 
+/* Footer */
+.note-footer {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(0,0,0,0.06);
+}
+[data-theme="dark"] .note-footer { border-top-color: rgba(255,255,255,0.06); }
+ 
+.note-ts {
+  font-size: 10px;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  opacity: 0.38;
+  flex: 1;
+}
+ 
+.color-dots { display: flex; gap: 5px; align-items: center; }
+.color-dot {
+  width: 12px; height: 12px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: transform var(--spring), border-color var(--transition), box-shadow var(--transition);
+  outline: 2px solid transparent;
+  outline-offset: 1px;
+}
+.color-dot:hover { transform: scale(1.35); }
+.color-dot.active { outline-color: currentColor; transform: scale(1.2); box-shadow: 0 0 0 1px rgba(0,0,0,0.2); }
+ 
+.del-btn {
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: var(--text3);
+  cursor: pointer;
+  font-size: 16px;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0;
+  transition: all var(--transition);
+  flex-shrink: 0;
+}
+.note:hover .del-btn { opacity: 1; }
+.del-btn:hover { background: rgba(224,62,62,0.12); color: var(--red); transform: scale(1.1); }
+ 
+/* ─── Pin badge ──────────────────────────────────────────── */
+.pinned-badge {
+  position: absolute;
+  top: -6px; left: 16px;
+  font-size: 12px;
+  filter: drop-shadow(0 2px 3px rgba(0,0,0,0.2));
+  animation: pinDrop 0.4s var(--spring);
+  pointer-events: none;
+}
+@keyframes pinDrop {
+  from { transform: translateY(-10px) scale(0.6) rotate(-30deg); opacity: 0; }
+  to   { transform: translateY(0) scale(1) rotate(0deg); opacity: 1; }
+}
+ 
+/* ─── Empty State ────────────────────────────────────────── */
+.empty {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 6rem 2rem;
+  gap: 12px;
+  animation: fadeUp 0.5s ease both;
+}
+.empty-art {
+  width: 80px; height: 80px;
+  background: var(--surface);
+  border: 1px solid var(--border-md);
+  border-radius: var(--radius-lg);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 36px;
+  margin-bottom: 8px;
+  box-shadow: var(--shadow-md);
+  animation: float 3s ease-in-out infinite;
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-8px); }
+}
+.empty h2 { font-family: var(--font-display); font-size: 22px; font-weight: 400; color: var(--text); }
+.empty p  { font-size: 14px; font-weight: 300; color: var(--text2); max-width: 280px; line-height: 1.6; }
+.empty kbd {
+  display: inline-block;
+  background: var(--surface);
+  border: 1px solid var(--border-md);
+  border-bottom-width: 2px;
+  border-radius: 5px;
+  padding: 1px 7px;
+  font-size: 12px;
+  font-family: monospace;
+  color: var(--text2);
+  box-shadow: var(--shadow-sm);
+}
+ 
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+ 
+/* ─── Toast ──────────────────────────────────────────────── */
+.toast {
+  position: fixed;
+  bottom: 24px; left: 50%;
+  transform: translateX(-50%) translateY(80px);
+  background: var(--text);
+  color: var(--bg);
+  font-size: 13px;
+  font-weight: 400;
+  padding: 10px 20px;
+  border-radius: 40px;
+  box-shadow: var(--shadow-lg);
+  opacity: 0;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 9999;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+ 
+/* ─── Scrollbar ──────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-md); border-radius: 10px; }
+</style>
+</head>
+<body>
+ 
+<!-- Header -->
+<header>
+  <div class="header-inner">
+    <a class="logo" href="#">
+      <div class="logo-icon">📝</div>
+      <span class="logo-text">NoteWall</span>
+    </a>
+ 
+    <div class="search-wrap">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor">
+        <circle cx="6.5" cy="6.5" r="4.5" stroke-width="1.5"/>
+        <path d="M10 10L13.5 13.5" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+      <input type="text" id="search" placeholder="Search your notes…" oninput="renderNotes()" autocomplete="off">
+    </div>
+ 
+    <div class="header-actions">
+      <span class="pill-counter" id="counter">0 / 20</span>
+      <button class="icon-btn" id="dark-btn" onclick="toggleDark()" title="Toggle theme">
+        <svg id="theme-icon" viewBox="0 0 16 16" fill="currentColor">
+          <path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1zm0 12.5A5.5 5.5 0 0 1 8 2.5v11z"/>
+        </svg>
+      </button>
+      <button class="btn-add" onclick="addNote()">
+        <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <path d="M7 2v10M2 7h10"/>
+        </svg>
+        New note
+      </button>
+    </div>
+  </div>
+</header>
+ 
+<div id="app">
+  <main>
+    <!-- Pinned -->
+    <section id="pinned-section">
+      <div class="section-header">
+        <span class="section-label">Pinned</span>
+        <div class="section-line"></div>
+      </div>
+      <div class="notes-grid" id="pinned-grid"></div>
+    </section>
+ 
+    <!-- All notes -->
+    <div id="unpinned-section">
+      <div class="section-header" id="all-header" style="display:none">
+        <span class="section-label">All notes</span>
+        <div class="section-line"></div>
+      </div>
+      <div class="notes-grid" id="notes-grid"></div>
+    </div>
+ 
+    <!-- Empty -->
+    <div class="empty" id="empty">
+      <div class="empty-art">🗒️</div>
+      <h2>Your wall is empty</h2>
+      <p>Create your first note to get started. Drag, pin, and color-code to stay organized.</p>
+      <p><kbd>N</kbd> to quickly add a note</p>
+    </div>
+  </main>
+</div>
+ 
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+ 
+<script>
+/* ─── Data ──────────────────────────────────────────────── */
+const PALETTES = {
+  light: [
+    { bg:'#fffbeb', shine:'#f59e0b', dot:'#f59e0b' },
+    { bg:'#f0fdf4', shine:'#22c55e', dot:'#22c55e' },
+    { bg:'#eff6ff', shine:'#3b82f6', dot:'#3b82f6' },
+    { bg:'#fdf4ff', shine:'#a855f7', dot:'#a855f7' },
+    { bg:'#fff1f2', shine:'#f43f5e', dot:'#f43f5e' },
+    { bg:'#fff7ed', shine:'#f97316', dot:'#f97316' },
+    { bg:'#f0fdfa', shine:'#14b8a6', dot:'#14b8a6' },
+    { bg:'#fefce8', shine:'#eab308', dot:'#eab308' },
+  ],
+  dark: [
+    { bg:'#292410', shine:'#f59e0b', dot:'#fbbf24' },
+    { bg:'#0e2018', shine:'#22c55e', dot:'#4ade80' },
+    { bg:'#0f1c30', shine:'#3b82f6', dot:'#60a5fa' },
+    { bg:'#1e1028', shine:'#a855f7', dot:'#c084fc' },
+    { bg:'#27100f', shine:'#f43f5e', dot:'#fb7185' },
+    { bg:'#261508', shine:'#f97316', dot:'#fb923c' },
+    { bg:'#082320', shine:'#14b8a6', dot:'#2dd4bf' },
+    { bg:'#211e08', shine:'#eab308', dot:'#facc15' },
+  ]
+};
+ 
+let notes = JSON.parse(localStorage.getItem('nw_notes') || '[]');
+let dark  = JSON.parse(localStorage.getItem('nw_dark')  || 'false');
+let dragSrc = null;
+ 
+const save = () => localStorage.setItem('nw_notes', JSON.stringify(notes));
+const ts   = () => new Date().toLocaleString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+ 
+/* ─── Toast ─────────────────────────────────────────────── */
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+}
+ 
+/* ─── CRUD ───────────────────────────────────────────────── */
+function addNote() {
+  if (notes.length >= 20) { showToast('Wall is full — max 20 notes'); return; }
+  const n = { id: Date.now(), title:'', content:'', ci:0, pinned:false, edited:ts() };
+  notes.unshift(n);
+  save(); renderNotes();
+  setTimeout(() => { const el = document.getElementById('t'+n.id); if(el) el.focus(); }, 60);
+}
+ 
+function deleteNote(id) {
+  const el = document.getElementById('note'+id);
+  if (el) {
+    el.style.animation = 'noteOut 0.22s ease forwards';
+    setTimeout(() => { notes = notes.filter(n=>n.id!==id); save(); renderNotes(); }, 200);
+  } else {
+    notes = notes.filter(n=>n.id!==id); save(); renderNotes();
+  }
+  showToast('Note deleted');
+}
+ 
+function pinNote(id) {
+  const n = notes.find(x=>x.id===id);
+  if (!n) return;
+  n.pinned = !n.pinned;
+  save(); renderNotes();
+  showToast(n.pinned ? '📌 Note pinned' : 'Note unpinned');
+}
+ 
+function setColor(id, ci) {
+  const n = notes.find(x=>x.id===id);
+  if (!n) return;
+  n.ci = ci; save(); renderNotes();
+}
+ 
+function update(id, key, val) {
+  const n = notes.find(x=>x.id===id);
+  if (!n) return;
+  n[key] = val; n.edited = ts(); save();
+}
+ 
+/* ─── Theme ──────────────────────────────────────────────── */
+function toggleDark() {
+  dark = !dark;
+  applyTheme();
+  localStorage.setItem('nw_dark', dark);
+  renderNotes();
+  showToast(dark ? '🌙 Dark mode on' : '☀️ Light mode on');
+}
+function applyTheme() {
+  document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+  updateThemeIcon();
+}
+function updateThemeIcon() {
+  const icon = document.getElementById('theme-icon');
+  icon.innerHTML = dark
+    ? `<path d="M8 3a5 5 0 1 0 0 10A5 5 0 0 0 8 3zm0 1.5a3.5 3.5 0 0 1 0 7 3.5 3.5 0 0 1 0-7zM8 1v1.5M8 13.5V15M1 8h1.5M13.5 8H15M3.22 3.22l1.06 1.06M11.72 11.72l1.06 1.06M3.22 12.78l1.06-1.06M11.72 4.28l1.06-1.06" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" fill="none"/>`
+    : `<path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1zm0 12.5A5.5 5.5 0 0 1 8 2.5v11z"/>`;
+}
+ 
+/* ─── Helpers ────────────────────────────────────────────── */
+function esc(s) {
+  return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function autoH(el) { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px'; }
+ 
+/* ─── Card Factory ───────────────────────────────────────── */
+function makeCard(note) {
+  const pal = dark ? PALETTES.dark : PALETTES.light;
+  const col = pal[note.ci % pal.length];
+ 
+  const card = document.createElement('div');
+  card.className = 'note' + (note.pinned ? ' pinned' : '');
+  card.id = 'note' + note.id;
+  card.draggable = true;
+  card.style.background = col.bg;
+ 
+  const dotHtml = pal.map((c,i) => `
+    <span class="color-dot${note.ci===i?' active':''}"
+      style="background:${c.dot}; color:${c.dot}"
+      onclick="setColor(${note.id},${i})"
+      title="Color ${i+1}">
+    </span>`).join('');
+ 
+  card.innerHTML = `
+    ${note.pinned ? '<div class="pinned-badge">📌</div>' : ''}
+    <div class="note-shine" style="background: linear-gradient(90deg, ${col.shine}, transparent)"></div>
+    <button class="pin-btn" onclick="pinNote(${note.id})" title="${note.pinned?'Unpin':'Pin'}">
+      <svg viewBox="0 0 16 16" fill="currentColor">
+        <path d="M9.828.722a.5.5 0 0 1 .354.146l4.95 4.95a.5.5 0 0 1 0 .707c-.48.48-1.072.588-1.503.588-.177 0-.335-.018-.46-.039l-3.134 3.134a6 6 0 0 1 .16 1.013c.046.702-.032 1.687-.72 2.375a.5.5 0 0 1-.707 0l-2.829-2.828-3.182 3.182c-.195.195-1.219.902-1.414.707s.512-1.22.707-1.414l3.182-3.182-2.828-2.829a.5.5 0 0 1 0-.707c.688-.688 1.673-.767 2.375-.72a6 6 0 0 1 1.013.16l3.134-3.133a3 3 0 0 1-.04-.461c0-.43.108-1.022.589-1.503a.5.5 0 0 1 .353-.146z"/>
+      </svg>
+    </button>
+    <input class="note-title" id="t${note.id}" value="${esc(note.title)}" placeholder="Title"
+      oninput="update(${note.id},'title',this.value)">
+    <textarea class="note-content" id="c${note.id}" placeholder="Start writing…"
+      oninput="update(${note.id},'content',this.value);autoH(this)">${esc(note.content)}</textarea>
+    <div class="note-footer">
+      <span class="note-ts">${note.edited}</span>
+      <div class="color-dots">${dotHtml}</div>
+      <button class="del-btn" onclick="deleteNote(${note.id})" title="Delete">
+        <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor">
+          <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
+          <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
+        </svg>
+      </button>
+    </div>
+  `;
+ 
+  /* Drag & drop */
+  card.addEventListener('dragstart', e => {
+    dragSrc = note.id;
+    setTimeout(() => card.classList.add('dragging'), 0);
+    e.dataTransfer.effectAllowed = 'move';
+  });
+  card.addEventListener('dragend', () => {
+    card.classList.remove('dragging');
+    document.querySelectorAll('.drag-over').forEach(x => x.classList.remove('drag-over'));
+  });
+  card.addEventListener('dragover', e => { e.preventDefault(); card.classList.add('drag-over'); });
+  card.addEventListener('dragleave', () => card.classList.remove('drag-over'));
+  card.addEventListener('drop', e => {
+    e.preventDefault();
+    card.classList.remove('drag-over');
+    if (dragSrc === note.id) return;
+    const si = notes.findIndex(x=>x.id===dragSrc);
+    const ti = notes.findIndex(x=>x.id===note.id);
+    if (si === -1 || ti === -1) return;
+    const [moved] = notes.splice(si,1);
+    notes.splice(ti, 0, moved);
+    save(); renderNotes();
+  });
+ 
+  return card;
+}
+ 
+/* ─── Render ─────────────────────────────────────────────── */
+function renderNotes() {
+  const q = (document.getElementById('search').value || '').toLowerCase().trim();
+  const filtered = notes.filter(n =>
+    !q || (n.title+' '+n.content).toLowerCase().includes(q)
+  );
+  const pinned   = filtered.filter(n =>  n.pinned);
+  const unpinned = filtered.filter(n => !n.pinned);
+ 
+  const ps = document.getElementById('pinned-section');
+  const pg = document.getElementById('pinned-grid');
+  const ng = document.getElementById('notes-grid');
+  const em = document.getElementById('empty');
+  const ah = document.getElementById('all-header');
+  const ct = document.getElementById('counter');
+ 
+  pg.innerHTML = ''; ng.innerHTML = '';
+ 
+  ps.style.display = pinned.length   ? 'block' : 'none';
+  ah.style.display = (pinned.length && unpinned.length) ? 'flex' : 'none';
+ 
+  pinned.forEach(n   => pg.appendChild(makeCard(n)));
+  unpinned.forEach(n => ng.appendChild(makeCard(n)));
+ 
+  em.style.display = filtered.length === 0 ? 'flex' : 'none';
+ 
+  const count = notes.length;
+  ct.textContent = count + ' / 20';
+  ct.className = 'pill-counter' + (count >= 18 ? ' near-limit' : '');
+ 
+  /* Resize all textareas */
+  requestAnimationFrame(() => {
+    document.querySelectorAll('.note-content').forEach(autoH);
+  });
+}
+ 
+/* ─── Keyboard shortcut ──────────────────────────────────── */
+document.addEventListener('keydown', e => {
+  if (e.key === 'n' && !['INPUT','TEXTAREA'].includes(document.activeElement.tagName)) {
+    e.preventDefault();
+    addNote();
+  }
+  if (e.key === 'Escape') document.getElementById('search').blur();
+  if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+    e.preventDefault();
+    document.getElementById('search').focus();
+  }
+});
+ 
+/* ─── Init ───────────────────────────────────────────────── */
+applyTheme();
+renderNotes();
+</script>
+</body>
+</html>
